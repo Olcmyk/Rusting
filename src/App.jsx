@@ -48,13 +48,16 @@ export default function App() {
             files="/assets/DaySkyHDRI055A_1K/DaySkyHDRI055A_1K_HDR.exr"
             background={false}
           />
+          <RustingMetal />
         </Suspense>
-        <ambientLight intensity={0.3} />
-        <mesh>
-          <sphereGeometry args={[1, 32, 32]} />
-          <meshStandardMaterial color="silver" metalness={0.9} roughness={0.1} />
-        </mesh>
-        <OrbitControls />
+        <OrbitControls
+          enablePan={false}
+          minDistance={1.5}
+          maxDistance={6}
+          minPolarAngle={Math.PI / 6}
+          maxPolarAngle={Math.PI / 2.2}
+          target={[0, -0.2, 0]}
+        />
       </Canvas>
     </ErrorBoundary>
   )
