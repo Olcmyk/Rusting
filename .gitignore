@@ -1,18 +1,3 @@
-# Build artifacts
-/target/
-/dist/
-
-# Cargo lock (optional, uncomment if you want to ignore)
-# Cargo.lock
-
-# macOS
-.DS_Store
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Assets (uncomment if needed)
 assets/
+node_modules/
+dist/
