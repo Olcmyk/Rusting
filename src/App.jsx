@@ -49,6 +49,7 @@ export default function App() {
             background={false}
           />
           <RustingMetal />
+          <Effects />
         </Suspense>
         <OrbitControls
           enablePan={false}
