@@ -44,9 +44,24 @@ export default function App() {
         dpr={[1, 2]}
       >
         <Suspense fallback={null}>
+          {/* HDRI 提供环境反射 */}
           <Environment
             files="/assets/DaySkyHDRI055A_1K/DaySkyHDRI055A_1K_HDR.exr"
             background={false}
+            environmentIntensity={0.4}
+          />
+          {/* 白炽灯主光源 - 提供明确的高光和阴影 */}
+          <pointLight
+            position={[2, 3, 2]}
+            intensity={50}
+            color="#ffddaa"
+            decay={2}
+          />
+          <pointLight
+            position={[-2, 1, -1]}
+            intensity={15}
+            color="#ffeedd"
+            decay={2}
           />
           <RustingMetal />
           <Effects />
