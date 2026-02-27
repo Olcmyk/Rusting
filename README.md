@@ -4,18 +4,6 @@ A metal sphere oxidizing in real time.
 
 The sphere starts as polished metal and slowly rusts over the configured duration. The frontend renders the current oxidation state based on elapsed time since deployment. Meanwhile, this repository's GitHub language bar shifts from Metal to Rust — the code itself is rusting.
 
-## Status
-
-- Oxidation: 0.0%
-- Metal: 3650 lines
-- Rust: 0 lines
-
-### Language Composition
-```
-████████████████████████████████████████████████████████████████████████████████
-Metal: 100.0%                                                        Rust: 0.0%
-```
-
 ## How it works
 
 **Frontend**: Three.js WebGPU renders an icosahedron with procedural rust textures from [tsl-textures](https://github.com/boytchev/tsl-textures). The oxidation percentage is computed from `(now - deployTimestamp) / totalDays` with smoothstep easing.

@@ -53,24 +53,6 @@ jobs:
           TOTAL=$((METAL_LINES + RUST_LINES))
           PCT=$(awk "BEGIN {printf \"%.1f\", ($RUST_LINES/$TOTAL)*100}")
 
-          # Update README Status section
-          sed -i "s|Oxidation: .*%|Oxidation: ${PCT}%|" README.md
-          sed -i "s|Metal: .* lines|Metal: ${METAL_LINES} lines|" README.md
-          sed -i "s|Rust: .* lines|Rust: ${RUST_LINES} lines|" README.md
-
-          # Update language composition bar (80 chars total)
-          FILLED=$(awk "BEGIN {printf \"%.0f\", ($RUST_LINES/$TOTAL)*80}")
-          EMPTY=$((80 - FILLED))
-          BAR=$(printf '█%.0s' $(seq 1 $EMPTY))$(printf '░%.0s' $(seq 1 $FILLED))
-          METAL_PCT=$(awk "BEGIN {printf \"%.1f\", ($METAL_LINES/$TOTAL)*100}")
-          RUST_PCT="${PCT}"
-
-          # Calculate spacing to align percentages (total line ~80 chars)
-          LABEL_LINE=$(printf "Metal: %-6s%*sRust: %s" "${METAL_PCT}%" $((80 - 14 - ${#METAL_PCT} - ${#RUST_PCT})) "" "${RUST_PCT}%")
-
-          sed -i "/^[█░]/c\\${BAR}" README.md
-          sed -i "s|^Metal: .*%.*Rust: .*%.*$|${LABEL_LINE}|" README.md
-
           # Update Latest Deployment section with progress
           if grep -q "## Latest Deployment" README.md; then
             # Update "Days elapsed" line if it exists, otherwise add it

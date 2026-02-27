@@ -34,16 +34,6 @@ jobs:
           # Calculate end date
           END_DATE=$(date -u -d "+${TOTAL_DAYS} days" +"%Y-%m-%d" 2>/dev/null || echo "N/A")
 
-          # Update Status section in README
-          sed -i "s|Oxidation: .*%|Oxidation: 0.0%|" README.md
-          sed -i "s|Metal: .* lines|Metal: ${TOTAL_LINES} lines|" README.md
-          sed -i "s|Rust: .* lines|Rust: 0 lines|" README.md
-
-          # Update language composition bar (80 chars total)
-          METAL_BAR="████████████████████████████████████████████████████████████████████████████████"
-          sed -i "/^████/c\\${METAL_BAR}" README.md
-          sed -i "s|^Metal: .*%.*Rust: .*%.*$|Metal: 100.0%                                                        Rust: 0.0%|" README.md
-
           # Update or add deployment info section
           cat > /tmp/deployment_info.txt <<EOF
           ## Latest Deployment
@@ -61,8 +51,8 @@ jobs:
             sed -i '/## Latest Deployment/r /tmp/deployment_info.txt' README.md
             sed -i '/## Latest Deployment/{n;d;}' README.md
           else
-            # Add after Status section
-            sed -i '/## Status/r /tmp/deployment_info.txt' README.md
+            # Add after How it works section
+            sed -i '/## How it works/r /tmp/deployment_info.txt' README.md
           fi
 
       - name: Commit changes
