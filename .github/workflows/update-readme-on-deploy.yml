@@ -40,6 +40,12 @@ jobs:
           sed -i "s|Metal: .* lines|Metal: ${TOTAL_LINES} lines|" README.md
           sed -i "s|Rust: .* lines|Rust: 0 lines|" README.md
 
+          # Update language composition bar
+          METAL_BAR="████████████████████████████████████████"
+          RUST_BAR="░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"
+          sed -i "s|Metal .*% *$|Metal ${METAL_BAR} 100.0%|" README.md
+          sed -i "s|Rust  .*% *$|Rust  ${RUST_BAR}   0.0%|" README.md
+
           # Update or add deployment info section
           if grep -q "## Latest Deployment" README.md; then
             sed -i "/## Latest Deployment/,/^## /c\\

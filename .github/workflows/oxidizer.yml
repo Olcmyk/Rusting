@@ -58,6 +58,17 @@ jobs:
           sed -i "s|Metal: .* lines|Metal: ${METAL_LINES} lines|" README.md
           sed -i "s|Rust: .* lines|Rust: ${RUST_LINES} lines|" README.md
 
+          # Update language composition bar (40 chars total)
+          FILLED=$(awk "BEGIN {printf \"%.0f\", ($RUST_LINES/$TOTAL)*40}")
+          EMPTY=$((40 - FILLED))
+          METAL_BAR=$(printf '█%.0s' $(seq 1 $EMPTY))$(printf '░%.0s' $(seq 1 $FILLED))
+          RUST_BAR=$(printf '░%.0s' $(seq 1 $EMPTY))$(printf '█%.0s' $(seq 1 $FILLED))
+          METAL_PCT=$(awk "BEGIN {printf \"%.1f\", ($METAL_LINES/$TOTAL)*100}")
+          RUST_PCT="${PCT}"
+
+          sed -i "s|Metal .*$|Metal ${METAL_BAR} ${METAL_PCT}%|" README.md
+          sed -i "s|Rust  .*$|Rust  ${RUST_BAR} ${RUST_PCT}%|" README.md
+
           # Update Latest Deployment section with progress
           if grep -q "## Latest Deployment" README.md; then
             # Update "Days elapsed" line if it exists, otherwise add it
