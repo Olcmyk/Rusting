@@ -10,15 +10,5 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
-    rollupOptions: {
-      external: [
-        'three',
-        'three/webgpu',
-        'three/tsl',
-        'three/addons/controls/OrbitControls.js',
-        'three/addons/utils/BufferGeometryUtils.js',
-        'tsl-textures',
-      ],
-    },
   },
 });
