@@ -45,23 +45,24 @@ jobs:
           sed -i "s|^Metal: .*%.*Rust: .*%.*$|Metal: 100.0%                                                        Rust: 0.0%|" README.md
 
           # Update or add deployment info section
+          cat > /tmp/deployment_info.txt <<EOF
+          ## Latest Deployment
+
+          - Time: ${DEPLOY_TIME}
+          - URL: ${DEPLOY_URL}
+          - Duration: ${TOTAL_DAYS} days (${TOTAL_LINES} iterations)
+          - Expected completion: ${END_DATE}
+          EOF
+
           if grep -q "## Latest Deployment" README.md; then
-            sed -i "/## Latest Deployment/,/^## /c\\
-## Latest Deployment\n\n\
-- Time: ${DEPLOY_TIME}\n\
-- URL: ${DEPLOY_URL}\n\
-- Duration: ${TOTAL_DAYS} days (${TOTAL_LINES} iterations)\n\
-- Expected completion: ${END_DATE}\n\n\
-## " README.md
+            # Remove old deployment section
+            sed -i '/## Latest Deployment/,/^## /{/^## Latest Deployment/!{/^## /!d;}}' README.md
+            # Insert new deployment info after "## Latest Deployment"
+            sed -i '/## Latest Deployment/r /tmp/deployment_info.txt' README.md
+            sed -i '/## Latest Deployment/{n;d;}' README.md
           else
             # Add after Status section
-            sed -i "/## Status/,/^$/a\\
-\n\
-## Latest Deployment\n\n\
-- Time: ${DEPLOY_TIME}\n\
-- URL: ${DEPLOY_URL}\n\
-- Duration: ${TOTAL_DAYS} days (${TOTAL_LINES} iterations)\n\
-- Expected completion: ${END_DATE}\n" README.md
+            sed -i '/## Status/r /tmp/deployment_info.txt' README.md
           fi
 
       - name: Commit changes
