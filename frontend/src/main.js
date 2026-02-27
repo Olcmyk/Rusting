@@ -22,7 +22,7 @@ scene.background = new THREE.Color('white');
 
 // --- Camera ---
 const camera = new THREE.PerspectiveCamera(5, innerWidth / innerHeight, 0.1, 100);
-camera.position.set(0, 0, 30);
+camera.position.set(20, 10, 20);
 
 // --- Lights ---
 const dirLight = new THREE.DirectionalLight('white', 1.5);
@@ -96,9 +96,11 @@ scene.add(shell);
 // --- Controls ---
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.autoRotate = true;
-controls.autoRotateSpeed = 0.5;
+controls.autoRotateSpeed = -0.5;
 controls.enableDamping = true;
 controls.enableZoom = false;
+controls.enablePan = false;
+controls.enableRotate = false;
 
 // --- Resize ---
 window.addEventListener('resize', () => {

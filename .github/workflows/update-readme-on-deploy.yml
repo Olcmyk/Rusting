@@ -16,21 +16,20 @@ jobs:
           ref: main
 
       - name: Initialize and update README
+        env:
+          TARGET_DAY: ${{ secrets.TARGET_DAY }}
         run: |
           DEPLOY_TIME=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
           DEPLOY_URL="${{ github.event.deployment_status.target_url }}"
 
-          # Fetch TOTAL_DAYS from deployed site
-          sleep 10  # Wait for deployment to be fully ready
-          TOTAL_DAYS=$(curl -s "$DEPLOY_URL" | grep -oP 'Total duration</td><td>\K[0-9.]+' || echo "365")
-
-          # Convert to integer (ceiling)
+          # Use TARGET_DAY from GitHub Secrets
+          TOTAL_DAYS="${TARGET_DAY:-365}"
           TOTAL_LINES=$(printf "%.0f" "$TOTAL_DAYS")
           [ "$TOTAL_LINES" -lt 1 ] && TOTAL_LINES=1
 
-          # Initialize metal.metal and rust.rs
+          # Initialize metal.metal with # symbols and rust.rs as empty
           printf '#%.0s\n' $(seq 1 "$TOTAL_LINES") > self/metal.metal
-          : > self/rust.rs
+          > self/rust.rs
 
           # Calculate end date
           END_DATE=$(date -u -d "+${TOTAL_DAYS} days" +"%Y-%m-%d" 2>/dev/null || echo "N/A")
