@@ -1,5 +1,11 @@
 {
   "buildCommand": "TOTAL_DAYS=3 npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
+  "ignoreCommand": "bash -c 'git diff --quiet HEAD^ HEAD -- frontend/ vercel.json'"
 }
