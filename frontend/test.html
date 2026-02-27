@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { margin: 0; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.183.0/build/three.webgpu.min.js",
+        "three/webgpu": "https://cdn.jsdelivr.net/npm/three@0.183.0/build/three.webgpu.min.js",
+        "three/tsl": "https://cdn.jsdelivr.net/npm/three@0.183.0/build/three.tsl.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.183.0/examples/jsm/",
+        "tsl-textures": "https://cdn.jsdelivr.net/npm/tsl-textures@3.0.1/dist/tsl-textures.min.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <script type="module">
+    import * as THREE from 'three/webgpu';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+    import { rust } from 'tsl-textures';
+
+    console.log('rust:', rust);
+    console.log('rust.defaults:', rust.defaults);
+
+    const renderer = new THREE.WebGPURenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+    document.body.appendChild(renderer.domElement);
+    await renderer.init();
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('white');
+
+    const camera = new THREE.PerspectiveCamera(5, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 30);
+
+    const light = new THREE.DirectionalLight('white', 1.5);
+    scene.add(light);
+    const ambLight = new THREE.AmbientLight('white', 2);
+    scene.add(ambLight);
+
+    let geometry = new THREE.IcosahedronGeometry(1, 20);
+    geometry = mergeVertices(geometry);
+    geometry.computeTangents();
+
+    const material = new THREE.MeshPhysicalNodeMaterial({
+      colorNode: rust(rust.defaults),
+      transparent: true,
+      opacity: 1,
+      side: THREE.DoubleSide,
+    });
+
+    if (rust.opacity) {
+      material.opacityNode = rust.opacity(rust.defaults);
+    }
+
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.autoRotate = true;
+    controls.enableDamping = true;
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      light.position.copy(camera.position);
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

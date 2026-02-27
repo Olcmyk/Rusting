@@ -1,0 +1,69 @@
+name: oxidizer
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      total_days:
+        description: 'Total days for initialization (only used on first run)'
+        required: false
+        default: '3650'
+
+permissions:
+  contents: write
+
+jobs:
+  oxidize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize if needed
+        run: |
+          TOTAL="${{ github.event.inputs.total_days || '3650' }}"
+          METAL="self/metal.metal"
+          RUST="self/rust.rs"
+
+          # If metal.metal has only the placeholder or is very small, initialize
+          LINES=$(wc -l < "$METAL" | tr -d ' ')
+          if [ "$LINES" -lt 2 ]; then
+            echo "Initializing with $TOTAL lines..."
+            printf '#%.0s\n' $(seq 1 "$TOTAL") > "$METAL"
+            : > "$RUST"
+          fi
+
+      - name: Oxidize
+        run: |
+          METAL="self/metal.metal"
+          RUST="self/rust.rs"
+
+          REMAINING=$(wc -l < "$METAL" | tr -d ' ')
+          if [ "$REMAINING" -eq 0 ]; then
+            echo "Fully oxidized. Nothing to do."
+            exit 0
+          fi
+
+          # Remove last line from metal, append to rust
+          head -n -1 "$METAL" > "$METAL.tmp" && mv "$METAL.tmp" "$METAL"
+          echo '#' >> "$RUST"
+
+          # Update counts
+          METAL_LINES=$(wc -l < "$METAL" | tr -d ' ')
+          RUST_LINES=$(wc -l < "$RUST" | tr -d ' ')
+          TOTAL=$((METAL_LINES + RUST_LINES))
+          PCT=$(awk "BEGIN {printf \"%.1f\", ($RUST_LINES/$TOTAL)*100}")
+
+          # Update README progress
+          sed -i "s|Oxidation: .*%|Oxidation: ${PCT}%|" README.md
+          sed -i "s|Metal: .* lines|Metal: ${METAL_LINES} lines|" README.md
+          sed -i "s|Rust: .* lines|Rust: ${RUST_LINES} lines|" README.md
+
+      - name: Commit
+        run: |
+          git config user.name "oxidizer[bot]"
+          git config user.email "oxidizer[bot]@users.noreply.github.com"
+          git add self/ README.md
+          git diff --cached --quiet && exit 0
+          git commit -m "oxidize: another day passes"
+          git push
