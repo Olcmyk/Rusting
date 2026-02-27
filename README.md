@@ -16,6 +16,13 @@ The sphere starts as polished metal and slowly rusts over the configured duratio
 Metal: 100.0%                                                        Rust: 0.0%
 ```
 
+## Latest Deployment
+
+- Time: 2026-02-27 17:06:42 UTC
+- URL: https://rusting-2vjnycqpm-selenes-projects-3785c4e1.vercel.app
+- Duration: 3 days (3 iterations)
+- Expected completion: 2026-03-02
+
 ## How it works
 
 **Frontend**: Three.js WebGPU renders an icosahedron with procedural rust textures from [tsl-textures](https://github.com/boytchev/tsl-textures). The oxidation percentage is computed from `(now - deployTimestamp) / totalDays` with smoothstep easing.

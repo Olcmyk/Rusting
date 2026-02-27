@@ -44,14 +44,18 @@ jobs:
           sed -i "/^[█░]/c\\${METAL_BAR}" README.md
           sed -i "s|^Metal: .*%.*Rust: .*%.*$|Metal: 100.0%                                                        Rust: 0.0%|" README.md
 
-          # Remove old deployment section if exists
+          # Remove old deployment section if exists (from ## Latest Deployment to next ##)
           if grep -q "## Latest Deployment" README.md; then
-            sed -i '/## Latest Deployment/,/^## /{/^## Latest Deployment/d;/^## /!d;}' README.md
+            awk '
+            /^## Latest Deployment$/ { skip=1; next }
+            /^## / && skip { skip=0 }
+            !skip { print }
+            ' README.md > README.md.tmp && mv README.md.tmp README.md
           fi
 
           # Insert deployment info after the closing ``` of Language Composition
           awk -v deploy_time="${DEPLOY_TIME}" -v deploy_url="${DEPLOY_URL}" -v total_days="${TOTAL_DAYS}" -v total_lines="${TOTAL_LINES}" -v end_date="${END_DATE}" '
-          /^```$/ && !inserted {
+          /^```$/ && in_composition && !inserted {
             print
             print ""
             print "## Latest Deployment"
@@ -63,6 +67,7 @@ jobs:
             inserted=1
             next
           }
+          /### Language Composition/ { in_composition=1 }
           { print }
           ' README.md > README.md.tmp && mv README.md.tmp README.md
 
