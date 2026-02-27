@@ -25,9 +25,8 @@ jobs:
           METAL="self/metal.metal"
           RUST="self/rust.rs"
 
-          # If metal.metal has only the placeholder or is very small, initialize
-          LINES=$(wc -l < "$METAL" | tr -d ' ')
-          if [ "$LINES" -lt 2 ]; then
+          # Only initialize if files don't exist or are empty
+          if [ ! -f "$METAL" ] || [ ! -s "$METAL" ]; then
             echo "Initializing with $TOTAL lines..."
             printf '#%.0s\n' $(seq 1 "$TOTAL") > "$METAL"
             : > "$RUST"
@@ -40,7 +39,7 @@ jobs:
 
           REMAINING=$(wc -l < "$METAL" | tr -d ' ')
           if [ "$REMAINING" -eq 0 ]; then
-            echo "Fully oxidized. Nothing to do."
+            echo "✓ Fully oxidized. Process complete."
             exit 0
           fi
 
@@ -54,10 +53,23 @@ jobs:
           TOTAL=$((METAL_LINES + RUST_LINES))
           PCT=$(awk "BEGIN {printf \"%.1f\", ($RUST_LINES/$TOTAL)*100}")
 
-          # Update README progress
+          # Update README Status section
           sed -i "s|Oxidation: .*%|Oxidation: ${PCT}%|" README.md
           sed -i "s|Metal: .* lines|Metal: ${METAL_LINES} lines|" README.md
           sed -i "s|Rust: .* lines|Rust: ${RUST_LINES} lines|" README.md
+
+          # Update Latest Deployment section with progress
+          if grep -q "## Latest Deployment" README.md; then
+            # Update "Days elapsed" line if it exists, otherwise add it
+            if grep -q "Days elapsed:" README.md; then
+              sed -i "s|Days elapsed: .*|Days elapsed: ${RUST_LINES}/${TOTAL}|" README.md
+            else
+              sed -i "/Expected completion:/a\\
+- Days elapsed: ${RUST_LINES}/${TOTAL}" README.md
+            fi
+          fi
+
+          echo "Oxidation progress: ${PCT}% (${RUST_LINES}/${TOTAL} days)"
 
       - name: Commit
         run: |

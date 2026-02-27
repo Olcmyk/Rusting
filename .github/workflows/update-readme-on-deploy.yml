@@ -1,0 +1,70 @@
+name: Update README on Deploy
+
+on:
+  deployment_status:
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment_status.environment == 'Production'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Initialize and update README
+        run: |
+          DEPLOY_TIME=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          DEPLOY_URL="${{ github.event.deployment_status.target_url }}"
+
+          # Fetch TOTAL_DAYS from deployed site
+          sleep 10  # Wait for deployment to be fully ready
+          TOTAL_DAYS=$(curl -s "$DEPLOY_URL" | grep -oP 'Total duration</td><td>\K[0-9.]+' || echo "365")
+
+          # Convert to integer (ceiling)
+          TOTAL_LINES=$(printf "%.0f" "$TOTAL_DAYS")
+          [ "$TOTAL_LINES" -lt 1 ] && TOTAL_LINES=1
+
+          # Initialize metal.metal and rust.rs
+          printf '#%.0s\n' $(seq 1 "$TOTAL_LINES") > self/metal.metal
+          : > self/rust.rs
+
+          # Calculate end date
+          END_DATE=$(date -u -d "+${TOTAL_DAYS} days" +"%Y-%m-%d" 2>/dev/null || echo "N/A")
+
+          # Update Status section in README
+          sed -i "s|Oxidation: .*%|Oxidation: 0.0%|" README.md
+          sed -i "s|Metal: .* lines|Metal: ${TOTAL_LINES} lines|" README.md
+          sed -i "s|Rust: .* lines|Rust: 0 lines|" README.md
+
+          # Update or add deployment info section
+          if grep -q "## Latest Deployment" README.md; then
+            sed -i "/## Latest Deployment/,/^## /c\\
+## Latest Deployment\n\n\
+- Time: ${DEPLOY_TIME}\n\
+- URL: ${DEPLOY_URL}\n\
+- Duration: ${TOTAL_DAYS} days (${TOTAL_LINES} iterations)\n\
+- Expected completion: ${END_DATE}\n\n\
+## " README.md
+          else
+            # Add after Status section
+            sed -i "/## Status/,/^$/a\\
+\n\
+## Latest Deployment\n\n\
+- Time: ${DEPLOY_TIME}\n\
+- URL: ${DEPLOY_URL}\n\
+- Duration: ${TOTAL_DAYS} days (${TOTAL_LINES} iterations)\n\
+- Expected completion: ${END_DATE}\n" README.md
+          fi
+
+      - name: Commit changes
+        run: |
+          git config user.name "deploy-bot[bot]"
+          git config user.email "deploy-bot[bot]@users.noreply.github.com"
+          git add self/ README.md
+          git diff --cached --quiet && exit 0
+          git commit -m "deploy: initialize oxidation process [skip ci]"
+          git push
