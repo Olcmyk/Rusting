@@ -12,15 +12,9 @@ The sphere starts as polished metal and slowly rusts over the configured duratio
 
 ### Language Composition
 ```
-Metal ████████████████████████████████████████ 100.0%
-Rust  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0.0%
+████████████████████████████████████████████████████████████████████████████████
+Metal: 100.0%                                                        Rust: 0.0%
 ```
-
-### Live Language Stats
-
-![Top Language](https://img.shields.io/github/languages/top/Olcmyk/Rusting?style=for-the-badge)
-
-[![Language Stats](https://github-readme-stats.vercel.app/api/top-langs/?username=Olcmyk&repo=Rusting&layout=compact&hide_border=true&langs_count=2&theme=dark)](https://github.com/anuraghazra/github-readme-stats)
 
 ## How it works
 
