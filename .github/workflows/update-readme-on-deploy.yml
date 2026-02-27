@@ -44,26 +44,27 @@ jobs:
           sed -i "/^[█░]/c\\${METAL_BAR}" README.md
           sed -i "s|^Metal: .*%.*Rust: .*%.*$|Metal: 100.0%                                                        Rust: 0.0%|" README.md
 
-          # Update or add deployment info section
-          cat > /tmp/deployment_info.txt <<EOF
-          ## Latest Deployment
-
-          - Time: ${DEPLOY_TIME}
-          - URL: ${DEPLOY_URL}
-          - Duration: ${TOTAL_DAYS} days (${TOTAL_LINES} iterations)
-          - Expected completion: ${END_DATE}
-          EOF
-
+          # Remove old deployment section if exists
           if grep -q "## Latest Deployment" README.md; then
-            # Remove old deployment section
-            sed -i '/## Latest Deployment/,/^## /{/^## Latest Deployment/!{/^## /!d;}}' README.md
-            # Insert new deployment info after "## Latest Deployment"
-            sed -i '/## Latest Deployment/r /tmp/deployment_info.txt' README.md
-            sed -i '/## Latest Deployment/{n;d;}' README.md
-          else
-            # Add after Status section
-            sed -i '/## Status/r /tmp/deployment_info.txt' README.md
+            sed -i '/## Latest Deployment/,/^## /{/^## Latest Deployment/d;/^## /!d;}' README.md
           fi
+
+          # Insert deployment info after the closing ``` of Language Composition
+          awk -v deploy_time="${DEPLOY_TIME}" -v deploy_url="${DEPLOY_URL}" -v total_days="${TOTAL_DAYS}" -v total_lines="${TOTAL_LINES}" -v end_date="${END_DATE}" '
+          /^```$/ && !inserted {
+            print
+            print ""
+            print "## Latest Deployment"
+            print ""
+            print "- Time: " deploy_time
+            print "- URL: " deploy_url
+            print "- Duration: " total_days " days (" total_lines " iterations)"
+            print "- Expected completion: " end_date
+            inserted=1
+            next
+          }
+          { print }
+          ' README.md > README.md.tmp && mv README.md.tmp README.md
 
       - name: Commit changes
         run: |
