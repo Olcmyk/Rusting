@@ -34,15 +34,27 @@ jobs:
           # Calculate end date
           END_DATE=$(date -u -d "+${TOTAL_DAYS} days" +"%Y-%m-%d" 2>/dev/null || echo "N/A")
 
-          # Update Status section in README
-          sed -i "s|Oxidation: .*%|Oxidation: 0.0%|" README.md
-          sed -i "s|Metal: .* lines|Metal: ${TOTAL_LINES} lines|" README.md
-          sed -i "s|Rust: .* lines|Rust: 0 lines|" README.md
-
-          # Update language composition bar (80 chars total)
+          # Rebuild entire Status section with initial values
           METAL_BAR="████████████████████████████████████████████████████████████████████████████████"
-          sed -i "/^[█░]/c\\${METAL_BAR}" README.md
-          sed -i "s|^Metal: .*%.*Rust: .*%.*$|Metal: 100.0%                                                        Rust: 0.0%|" README.md
+          awk -v total="${TOTAL_LINES}" -v bar="${METAL_BAR}" '
+          /^## Status$/ {
+            print "## Status"
+            print ""
+            print "- Oxidation: 0.0%"
+            print "- Metal: " total " lines"
+            print "- Rust: 0 lines"
+            print ""
+            print "### Language Composition"
+            print "```"
+            print bar
+            print "Metal: 100.0%                                                        Rust: 0.0%"
+            print "```"
+            skip=1
+            next
+          }
+          /^## / && skip { skip=0 }
+          !skip { print }
+          ' README.md > README.md.tmp && mv README.md.tmp README.md
 
           # Remove old deployment section if exists (from ## Latest Deployment to next ##)
           if grep -q "## Latest Deployment" README.md; then
