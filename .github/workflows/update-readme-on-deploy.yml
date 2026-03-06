@@ -1,0 +1,67 @@
+name: Initialize Oxidation Process
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Initialize and update README
+        run: |
+          # Read TOTAL_DAYS from config.json
+          TOTAL_DAYS=$(node -p "require('./frontend/config.json').totalDays")
+          TOTAL_LINES=$(printf "%.0f" "$TOTAL_DAYS")
+          [ "$TOTAL_LINES" -lt 1 ] && TOTAL_LINES=1
+
+          # Clear and initialize metal.metal with # symbols and rust.rs as empty
+          printf '#\n%.0s' $(seq 1 "$TOTAL_LINES") > self/metal.metal
+          > self/rust.rs
+
+          # Calculate dates
+          DEPLOY_DATE=$(date -u +%Y-%m-%d)
+          DURATION_DAYS=$(printf "%.0f" "$TOTAL_DAYS")
+          END_DATE=$(date -u -d "$DEPLOY_DATE + $DURATION_DAYS days" +%Y-%m-%d 2>/dev/null || date -u -v+${DURATION_DAYS}d -j -f "%Y-%m-%d" "$DEPLOY_DATE" +%Y-%m-%d)
+
+          # Update Status section in README using awk for precise targeting
+          METAL_BAR="████████████████████████████████████████████████████████████████████████████████"
+          awk -v metal_bar="${METAL_BAR}" -v deploy_date="${DEPLOY_DATE}" -v duration="${DURATION_DAYS}" -v end_date="${END_DATE}" '
+          /^### Status/ { in_status=1; print; next }
+          /^```/ && in_status == 1 {
+            print
+            in_status=2
+            next
+          }
+          /^```/ && in_status == 2 {
+            print metal_bar
+            print "Metal: 100.0%                                                        Rust: 0.0%"
+            print ""
+            print "Deployed: " deploy_date
+            print "Duration: " duration " days"
+            print "Ends: " end_date
+            print
+            in_status=0
+            next
+          }
+          in_status == 2 {
+            # Skip old content inside code block
+            next
+          }
+          { print }
+          ' README.md > README.md.tmp && mv README.md.tmp README.md
+
+      - name: Commit changes
+        run: |
+          git config user.name "initializer-bot[bot]"
+          git config user.email "initializer-bot[bot]@users.noreply.github.com"
+          git add self/ README.md
+          git diff --cached --quiet && exit 0
+          git commit -m "deploy: initialize oxidation process [skip ci]"
+          git push

@@ -1,0 +1,123 @@
+name: oxidizer
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 北京时间晚上 9 点 (UTC+8)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  oxidize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check if ready to oxidize
+        run: |
+          METAL="self/metal.metal"
+
+          # Check if metal.metal exists and is not empty
+          if [ ! -f "$METAL" ] || [ ! -s "$METAL" ]; then
+            echo "metal.metal doesn't exist or is empty. Skipping oxidation."
+            exit 0
+          fi
+
+          # Check if first character is #
+          FIRST_CHAR=$(head -c 1 "$METAL")
+          if [ "$FIRST_CHAR" != "#" ]; then
+            echo "First character is not #. Skipping oxidation."
+            exit 0
+          fi
+
+          echo "Ready to oxidize."
+
+      - name: Oxidize self files
+        run: |
+          METAL="self/metal.metal"
+          RUST="self/rust.rs"
+
+          REMAINING=$(wc -l < "$METAL" | tr -d ' ')
+          if [ "$REMAINING" -eq 0 ]; then
+            echo "✓ Fully oxidized. Process complete."
+            exit 0
+          fi
+
+          # Remove last line from metal, append to rust
+          head -n -1 "$METAL" > "$METAL.tmp" && mv "$METAL.tmp" "$METAL"
+          echo '#' >> "$RUST"
+
+      - name: Update README
+        run: |
+          METAL="self/metal.metal"
+          RUST="self/rust.rs"
+
+          # Calculate counts AFTER oxidation
+          METAL_LINES=$(wc -l < "$METAL" | tr -d ' ')
+          RUST_LINES=$(wc -l < "$RUST" | tr -d ' ')
+          TOTAL=$((METAL_LINES + RUST_LINES))
+
+          # Handle edge case when TOTAL is 0
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "No lines to process"
+            exit 0
+          fi
+
+          PCT=$(awk "BEGIN {printf \"%.1f\", ($RUST_LINES/$TOTAL)*100}")
+
+          # Update language composition bar (80 chars total)
+          FILLED=$(awk "BEGIN {printf \"%.0f\", ($RUST_LINES/$TOTAL)*80}")
+          EMPTY=$((80 - FILLED))
+          BAR=$(printf '█%.0s' $(seq 1 $EMPTY))$(printf '░%.0s' $(seq 1 $FILLED))
+          METAL_PCT=$(awk "BEGIN {printf \"%.1f\", ($METAL_LINES/$TOTAL)*100}")
+          RUST_PCT="${PCT}"
+
+          # Calculate spacing to align percentages (total line ~80 chars)
+          LABEL_LINE=$(printf "Metal: %-6s%*sRust: %s" "${METAL_PCT}%" $((80 - 14 - ${#METAL_PCT} - ${#RUST_PCT})) "" "${RUST_PCT}%")
+
+          # Update Status section in README using awk for precise targeting
+          # First pass: extract date information
+          DATES=$(awk '
+          /^### Status/ { in_status=1; next }
+          /^```/ && in_status == 1 { in_status=2; next }
+          /^```/ && in_status == 2 { in_status=0; next }
+          in_status == 2 && /^(Deployed|Duration|Ends):/ { print; }
+          ' README.md)
+
+          # Second pass: update the status block
+          awk -v bar="${BAR}" -v label="${LABEL_LINE}" -v dates="${DATES}" '
+          /^### Status/ { in_status=1; print; next }
+          /^```/ && in_status == 1 {
+            print
+            in_status=2
+            next
+          }
+          /^```/ && in_status == 2 {
+            print bar
+            print label
+            if (dates != "") {
+              print ""
+              print dates
+            }
+            print
+            in_status=0
+            next
+          }
+          in_status == 2 {
+            # Skip old content inside code block
+            next
+          }
+          { print }
+          ' README.md > README.md.tmp && mv README.md.tmp README.md
+
+          echo "Oxidation progress: ${PCT}% (${RUST_LINES}/${TOTAL} days)"
+
+      - name: Commit
+        run: |
+          git config user.name "oxidizer-bot[bot]"
+          git config user.email "oxidizer-bot[bot]@users.noreply.github.com"
+          git add self/ README.md
+          git diff --cached --quiet && exit 0
+          git commit -m "oxidize: another day passes"
+          git push
