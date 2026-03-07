@@ -2,7 +2,7 @@ name: oxidizer
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 北京时间晚上 9 点 (UTC+8)
+    - cron: '0 0 * * *'  # 北京时间早上 8 点 (UTC+8)
   workflow_dispatch:
 
 permissions:
@@ -69,7 +69,12 @@ jobs:
           # Update language composition bar (80 chars total)
           FILLED=$(awk "BEGIN {printf \"%.0f\", ($RUST_LINES/$TOTAL)*80}")
           EMPTY=$((80 - FILLED))
-          BAR=$(printf '█%.0s' $(seq 1 $EMPTY))$(printf '░%.0s' $(seq 1 $FILLED))
+          
+          # 安全拼接进度条，完美避开 printf 空参数 Bug
+          BAR=""
+          if [ "$EMPTY" -gt 0 ]; then BAR="${BAR}$(printf '█%.0s' $(seq 1 $EMPTY))"; fi
+          if [ "$FILLED" -gt 0 ]; then BAR="${BAR}$(printf '░%.0s' $(seq 1 $FILLED))"; fi
+          
           METAL_PCT=$(awk "BEGIN {printf \"%.1f\", ($METAL_LINES/$TOTAL)*100}")
           RUST_PCT="${PCT}"
 
